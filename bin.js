@@ -6,17 +6,19 @@
  * for any AI coding tool (Claude Code, puku-cli, Cursor, GitHub Copilot,
  * JetBrains AI Assistant, Sourcegraph Cody, Windsurf, ...).
  *
+ * Conflict handling:
+ *   - AGENTS.md: append/replace a `<!-- testing-rules:start/end -->` marker
+ *     block. Preserves the user's existing content outside the markers.
+ *     Idempotent — re-running replaces only the marker block.
+ *   - Tool-specific files (SKILL.md, .mdc, copilot-instructions.md, .agent/...):
+ *     SKIP if the file already exists locally. The user can delete it to
+ *     re-trigger a write.
+ *
  * Usage:
  *   npx -y github:faisalBS23/testing-automation-agent
  *   npx -y github:faisalBS23/testing-automation-agent --global
  *   npx -y github:faisalBS23/testing-automation-agent --non-interactive --tools claude,cursor --scope project
  *   npx -y github:faisalBS23/testing-automation-agent --help
- *
- * Interactive flow:
- *   1. Project or Global?
- *   2. Which AI tools? (multi-select)
- *   3. Confirm? (y/n)
- *   4. Install.
  */
 
 const https = require('https');
@@ -29,18 +31,36 @@ const REPO_OWNER = 'faisalBS23';
 const REPO_NAME = 'testing-automation-agent';
 const BRANCH = 'main';
 const RAW_BASE = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${BRANCH}`;
+const TEMPLATES_BASE = `${RAW_BASE}/templates`;
 
-// [id, label, file, description]
+const MARKER_START = '<!-- testing-rules:start -->';
+const MARKER_END = '<!-- testing-rules:end -->';
+
+// [id, label, localPath (in user's repo), templatePath (in our repo), description]
+// For AGENTS.md we use a special marker-based merge. Others use skip-if-exists.
 const TOOLS = [
+  ['agents',  'AGENTS.md (universal)',      'AGENTS.md',
+    `${TEMPLATES_BASE}/AGENTS.md`,
+    'Universal — every AI tool reads this (Claude Code, Cursor, Codex, Copilot, ...)'],
+
   ['agent',   '.agent/ convention',          '.agent/rules/testing-rules.md',
-    'JetBrains AI, Sourcegraph Cody, Windsurf, modern cross-tool agents'],
+    `${TEMPLATES_BASE}/agent-rule.md`,
+    'JetBrains AI, Sourcegraph Cody, Windsurf'],
+
   ['claude',  'Claude Code',                 '.claude/skills/testing-rules/SKILL.md',
+    `${TEMPLATES_BASE}/claude-SKILL.md`,
     'Anthropic Claude Code skill discovery'],
+
   ['cursor',  'Cursor',                      '.cursor/rules/testing-standards.mdc',
-    'Cursor rule discovery (.mdc file)'],
+    `${TEMPLATES_BASE}/cursor-rule.mdc`,
+    'Cursor rule discovery'],
+
   ['copilot', 'GitHub Copilot',              '.github/copilot-instructions.md',
+    `${TEMPLATES_BASE}/copilot-instructions.md`,
     'GitHub Copilot workspace instructions'],
+
   ['puku',    'puku-cli',                    '.puku-cli/skills/testing-rules/SKILL.md',
+    `${TEMPLATES_BASE}/puku-SKILL.md`,
     'puku-cli skill discovery'],
 ];
 
@@ -49,8 +69,8 @@ function parseArgs(argv) {
     global: false,
     help: false,
     nonInteractive: false,
-    scope: null,           // 'project' | 'global'
-    tools: [],             // explicit tool ids
+    scope: null,
+    tools: [],
   };
   for (let i = 2; i < argv.length; i++) {
     const arg = argv[i];
@@ -72,11 +92,17 @@ Usage:
   npx testing-automation-agent --non-interactive --tools claude,cursor --scope project
   npx testing-automation-agent --help
 
-Interactive flow:
-  1. Project or Global?
-  2. Which AI tools? (multi-select)
-  3. Confirm?
-  4. Install + show next steps.
+Conflict handling:
+  - AGENTS.md         appended/merged under marker comments, never overwritten
+  - Other tool files  skipped if they already exist (delete to re-install)
+
+Supported tools (auto-detected unless --tools is passed):
+  agents    AGENTS.md (universal — every AI tool)
+  agent     .agent/ convention (JetBrains AI, Sourcegraph Cody, Windsurf)
+  claude    Claude Code skill
+  cursor    Cursor rule
+  copilot   GitHub Copilot instructions
+  puku      puku-cli skill
 `);
 }
 
@@ -97,13 +123,12 @@ function ask(rl, question) {
   return new Promise((resolve) => rl.question(question, (answer) => resolve(answer.trim())));
 }
 
-// Interactive multi-select checklist. Returns array of selected tool ids.
 async function pickTools(rl) {
   console.log('\nWhich AI tools do you want to install for?');
-  console.log('Enter a comma-separated list of numbers (e.g. "1,2,4"), or "all" for everything.\n');
+  console.log('Enter a comma-separated list of numbers (e.g. "1,2,4"), or "all".\n');
 
   TOOLS.forEach((t, i) => {
-    console.log(`  [${i + 1}] ${t[1].padEnd(28)} — ${t[3]}`);
+    console.log(`  [${i + 1}] ${t[1].padEnd(28)} — ${t[4]}`);
   });
   console.log(`  [all] Install all of the above`);
 
@@ -111,10 +136,7 @@ async function pickTools(rl) {
     const ans = (await ask(rl, '\nSelect (numbers or "all"): ')).toLowerCase();
     if (ans === 'all' || ans === 'a') return TOOLS.map((t) => t[0]);
     const nums = ans.split(',').map((s) => parseInt(s.trim(), 10)).filter((n) => !isNaN(n));
-    if (nums.length === 0) {
-      console.log('  Please enter at least one number, or "all".');
-      continue;
-    }
+    if (nums.length === 0) { console.log('  Please enter at least one number, or "all".'); continue; }
     const ids = [];
     let bad = false;
     for (const n of nums) {
@@ -127,8 +149,8 @@ async function pickTools(rl) {
 
 async function pickScope(rl) {
   console.log('\nWhere should the skill be installed?\n');
-  console.log('  [1] Project (./AGENTS.md + ./.<tool>/...) — current directory only');
-  console.log('  [2] Global  (' + os.homedir() + '/AGENTS.md + .../...) — follows you across all repos');
+  console.log('  [1] Project — current directory only');
+  console.log('  [2] Global  — ' + os.homedir() + ' (follows you across all repos)');
   while (true) {
     const ans = (await ask(rl, '\nChoose 1 or 2: '));
     if (ans === '1') return 'project';
@@ -142,6 +164,66 @@ async function confirm(rl, message) {
     const ans = (await ask(rl, message + ' (y/n): ')).toLowerCase();
     if (ans === 'y' || ans === 'yes') return true;
     if (ans === 'n' || ans === 'no') return false;
+  }
+}
+
+/**
+ * Merge a block of content into an existing file, replacing any previous
+ * marker-block and preserving content outside the markers.
+ *
+ * Returns the new file content.
+ */
+function mergeMarkerBlock(existing, newBlock) {
+  const wrappedBlock = `\n\n${MARKER_START}\n${newBlock.trimEnd()}\n${MARKER_END}\n`;
+  const re = new RegExp(`${escapeRegExp(MARKER_START)}[\\s\\S]*?${escapeRegExp(MARKER_END)}\\n?`, 'g');
+  if (re.test(existing)) {
+    return existing.replace(re, wrappedBlock.trimStart() + '\n');
+  }
+  // No existing marker block — append at the end
+  const sep = existing.endsWith('\n') ? '\n' : '\n\n';
+  return existing + sep + wrappedBlock;
+}
+
+function escapeRegExp(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+async function installFile({ base, localPath, templateUrl, isAgents, rl }) {
+  const dest = path.join(base, localPath);
+  const exists = fs.existsSync(dest);
+
+  // Tool-specific files: skip if already exists (user can delete to re-install)
+  if (!isAgents && exists) {
+    return { status: 'skip', reason: 'already exists (delete to re-install)', dest };
+  }
+
+  // Fetch the template content from GitHub
+  let templateContent;
+  try {
+    templateContent = await download(templateUrl);
+  } catch (err) {
+    return { status: 'fail', reason: err.message, dest };
+  }
+
+  fs.mkdirSync(path.dirname(dest), { recursive: true });
+
+  if (isAgents) {
+    if (exists) {
+      const existing = fs.readFileSync(dest, 'utf8');
+      const merged = mergeMarkerBlock(existing, templateContent);
+      // If nothing changed, skip
+      if (merged === existing) return { status: 'unchanged', dest };
+      fs.writeFileSync(dest, merged, 'utf8');
+      return { status: exists ? 'merged' : 'created', dest };
+    } else {
+      // No existing AGENTS.md — create one with the marker block
+      const wrapped = `${MARKER_START}\n${templateContent.trimEnd()}\n${MARKER_END}\n`;
+      fs.writeFileSync(dest, wrapped, 'utf8');
+      return { status: 'created', dest };
+    }
+  } else {
+    fs.writeFileSync(dest, templateContent, 'utf8');
+    return { status: 'created', dest };
   }
 }
 
@@ -159,6 +241,8 @@ async function main() {
     console.log('┌──────────────────────────────────────────────────────────────┐');
     console.log('│  testing-automation-agent — Senior SQA Playwright installer  │');
     console.log('└──────────────────────────────────────────────────────────────┘');
+    console.log('\nExisting files are preserved: AGENTS.md is merged under markers,');
+    console.log('tool-specific files are skipped if they already exist.\n');
 
     scope = args.global ? 'global' : await pickScope(rl);
     toolIds = await pickTools(rl);
@@ -173,33 +257,35 @@ async function main() {
   rl.close();
 
   const base = scope === 'global' ? os.homedir() : process.cwd();
-  // Always include AGENTS.md (universal)
-  const filesToInstall = ['AGENTS.md'];
+
+  console.log(`\nInstalling into ${base}:`);
+  let hadFailure = false;
+  let created = 0, merged = 0, skipped = 0, unchanged = 0;
+
   for (const id of toolIds) {
     const tool = TOOLS.find((t) => t[0] === id);
-    if (tool && !filesToInstall.includes(tool[2])) filesToInstall.push(tool[2]);
+    if (!tool) { console.log(`  [${id}] unknown tool — skipped`); continue; }
+    const isAgents = tool[0] === 'agents';
+    const result = await installFile({
+      base,
+      localPath: tool[2],
+      templateUrl: tool[3],
+      isAgents,
+      rl: null,
+    });
+
+    const label = `  ${tool[2].padEnd(48)}`;
+    if (result.status === 'created')   { console.log(`${label} created`); created++; }
+    else if (result.status === 'merged'){ console.log(`${label} merged (AGENTS.md marker block)`); merged++; }
+    else if (result.status === 'unchanged'){ console.log(`${label} unchanged (already up to date)`); unchanged++; }
+    else if (result.status === 'skip') { console.log(`${label} skipped (${result.reason})`); skipped++; }
+    else if (result.status === 'fail') { console.log(`${label} FAIL (${result.reason})`); hadFailure = true; }
   }
 
-  console.log(`\nInstalling ${filesToInstall.length} file(s) into ${base}:`);
-  let hadFailure = false;
-  for (const relPath of filesToInstall) {
-    const url = `${RAW_BASE}/${relPath}`;
-    const dest = path.join(base, relPath);
-    process.stdout.write(`  ${relPath} ... `);
-    try {
-      const content = await download(url);
-      fs.mkdirSync(path.dirname(dest), { recursive: true });
-      fs.writeFileSync(dest, content, 'utf8');
-      console.log('ok');
-    } catch (err) {
-      console.log(`FAIL (${err.message})`);
-      hadFailure = true;
-    }
-  }
-
+  console.log(`\nSummary: ${created} created, ${merged} merged, ${skipped} skipped, ${unchanged} unchanged`);
   if (hadFailure) process.exit(1);
 
-  console.log(`\n✓ Installed to ${base}`);
+  console.log(`\n✓ Done.`);
   console.log(`\nNext steps:`);
   console.log(`  1. Restart your AI coding tool (Claude Code, puku-cli, Cursor, JetBrains AI, ...)`);
   console.log(`  2. Ask: "write a Playwright test for the login page"`);
