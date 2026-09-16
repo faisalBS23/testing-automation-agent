@@ -1,0 +1,39 @@
+{
+  "name": "testing-automation-agent",
+  "version": "1.0.0",
+  "description": "Drop-in SQA Automation Engineer persona for Playwright. Installs a puku-cli skill that writes enterprise-grade tests with POM, role-based locators, and traceability matrices.",
+  "bin": {
+    "testing-automation-agent": "./bin.js"
+  },
+  "scripts": {
+    "start": "node bin.js"
+  },
+  "keywords": [
+    "playwright",
+    "testing",
+    "sqa",
+    "automation",
+    "puku-cli",
+    "skill",
+    "page-object-model"
+  ],
+  "author": "faisalBS23",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/faisalBS23/testing-automation-agent.git"
+  },
+  "bugs": {
+    "url": "https://github.com/faisalBS23/testing-automation-agent/issues"
+  },
+  "homepage": "https://github.com/faisalBS23/testing-automation-agent#readme",
+  "files": [
+    "bin.js",
+    ".puku-cli/",
+    "install.sh",
+    "install.ps1"
+  ],
+  "engines": {
+    "node": ">=14"
+  }
+}
