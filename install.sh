@@ -46,6 +46,7 @@ FILES=("AGENTS.md")
 # Tool-specific mirrors
 if [[ -z "$TOOLS" ]]; then
   FILES+=(
+    ".agent/rules/testing-rules.md"
     ".claude/skills/testing-rules/SKILL.md"
     ".cursor/rules/testing-standards.mdc"
     ".github/copilot-instructions.md"
@@ -55,6 +56,7 @@ else
   IFS=',' read -ra TOOL_LIST <<< "$TOOLS"
   for tool in "${TOOL_LIST[@]}"; do
     case "$tool" in
+      agent)     FILES+=(".agent/rules/testing-rules.md") ;;
       claude)    FILES+=(".claude/skills/testing-rules/SKILL.md") ;;
       cursor)    FILES+=(".cursor/rules/testing-standards.mdc") ;;
       copilot)   FILES+=(".github/copilot-instructions.md") ;;

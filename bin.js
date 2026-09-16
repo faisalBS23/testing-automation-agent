@@ -70,6 +70,7 @@ Usage:
 
 Supported tools (auto-detected unless --tools is passed):
   AGENTS.md         every AI tool (Claude Code, Cursor, Codex, Copilot, ...)
+  .agent/...        .agent convention (JetBrains AI, Sourcegraph Cody, Windsurf, ...)
   .claude/...       Claude Code skill
   .cursor/...       Cursor rule
   .github/...       GitHub Copilot
@@ -101,6 +102,7 @@ function selectFiles(args) {
   // Always include AGENTS.md
   const picks = ['AGENTS.md'];
   const toolToFile = {
+    agent: '.agent/rules/testing-rules.md',
     claude: '.claude/skills/testing-rules/SKILL.md',
     cursor: '.cursor/rules/testing-standards.mdc',
     copilot: '.github/copilot-instructions.md',

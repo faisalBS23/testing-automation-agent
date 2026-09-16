@@ -41,6 +41,7 @@ $Files = @("AGENTS.md")
 
 if ([string]::IsNullOrWhiteSpace($Tools)) {
     $Files += @(
+        ".agent/rules/testing-rules.md",
         ".claude/skills/testing-rules/SKILL.md",
         ".cursor/rules/testing-standards.mdc",
         ".github/copilot-instructions.md",
@@ -49,6 +50,7 @@ if ([string]::IsNullOrWhiteSpace($Tools)) {
 } else {
     foreach ($tool in $Tools.Split(',')) {
         switch ($tool.Trim().ToLower()) {
+            "agent"     { $Files += ".agent/rules/testing-rules.md" }
             "claude"    { $Files += ".claude/skills/testing-rules/SKILL.md" }
             "cursor"    { $Files += ".cursor/rules/testing-standards.mdc" }
             "copilot"   { $Files += ".github/copilot-instructions.md" }
