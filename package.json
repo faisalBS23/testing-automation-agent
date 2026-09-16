@@ -1,21 +1,27 @@
 {
   "name": "testing-automation-agent",
-  "version": "1.0.0",
-  "description": "Drop-in SQA Automation Engineer persona for Playwright. Installs a puku-cli skill that writes enterprise-grade tests with POM, role-based locators, and traceability matrices.",
+  "version": "2.0.0",
+  "description": "Drop-in Senior SQA Automation Engineer persona for Playwright. Installs AGENTS.md, Claude Code skill, Cursor rule, Copilot instructions, puku-cli skill, and .agent/rules/ — all with POM, role-based locators, and traceability matrix support.",
   "bin": {
-    "testing-automation-agent": "./bin.js"
+    "testing-rules": "./bin/install.js",
+    "testing-automation-agent": "./bin/install.js"
   },
   "scripts": {
-    "start": "node bin.js"
+    "start": "node bin/install.js",
+    "test": "node --test --test-force-exit tests/**/*.test.mjs"
   },
   "keywords": [
     "playwright",
     "testing",
     "sqa",
     "automation",
+    "page-object-model",
+    "agent-rules",
+    "claude-code",
+    "cursor",
+    "copilot",
     "puku-cli",
-    "skill",
-    "page-object-model"
+    "skill"
   ],
   "author": "faisalBS23",
   "license": "MIT",
@@ -28,12 +34,15 @@
   },
   "homepage": "https://github.com/faisalBS23/testing-automation-agent#readme",
   "files": [
-    "bin.js",
-    ".puku-cli/",
+    "bin/",
+    "skills/",
     "install.sh",
-    "install.ps1"
+    "install.ps1",
+    "README.md",
+    "INSTALL.md",
+    "package.json"
   ],
   "engines": {
-    "node": ">=14"
+    "node": ">=18"
   }
 }
