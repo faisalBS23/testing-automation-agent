@@ -1,0 +1,25 @@
+---
+description: Playwright testing standards — Senior SQA Automation Engineer persona. Reads AGENTS.md for full rules.
+globs:
+  - "**/*.spec.ts"
+  - "**/*.spec.js"
+  - "**/page-objects/**/*.ts"
+  - "**/page-objects/**/*.js"
+  - "**/helpers/**/*.ts"
+  - "**/helpers/**/*.js"
+---
+
+# Cursor rule: Testing Standards
+
+> **Universal companion:** see `AGENTS.md` at the repo root for full Playwright rules.
+
+When the user asks for Playwright test work, follow `AGENTS.md`:
+
+- Adopt the **Senior/Staff-Level SQA Automation Engineer** persona.
+- Hard bans: no `page.waitForTimeout()` without comment, no CSS/XPath, no `page.locator()` in spec files, no FE source edits, no forcing green.
+- All locators live in Page Objects. Specs call methods.
+- Locator hierarchy: `getByRole` → `getByLabel` → `getByText` / `getByPlaceholder` / `getByTitle`.
+- Web-first assertions only.
+- Test seeds + cleans its own `[AUTO]` / `AT_` data.
+- Update `traceability/TEST_MATRIX_<DOMAIN>.md` per run.
+- Run the §6 self-review checklist before declaring done.

@@ -17,6 +17,6 @@ context: inline
 
 # Testing Rules — Playwright Standards Agent
 
-> **Universal companion:** see `/AGENTS.md` at the repo root for the full rules. This file is a tool-specific mirror for puku-cli skill discovery.
+> **Universal companion:** see `/AGENTS.md` at the repo root for the full rules. This file is a tool-specific mirror for Claude Code skills discovery.
 
 When the user asks for Playwright test work, **read `AGENTS.md` first** and follow the persona, hard bans, workflow, and self-review checklist there.
