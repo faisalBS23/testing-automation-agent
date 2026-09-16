@@ -171,17 +171,20 @@ async function confirm(rl, message) {
  * Merge a block of content into an existing file, replacing any previous
  * marker-block and preserving content outside the markers.
  *
- * Returns the new file content.
+ * Returns the new file content. Idempotent: calling mergeMarkerBlock twice
+ * with the same newBlock returns the same string.
  */
 function mergeMarkerBlock(existing, newBlock) {
-  const wrappedBlock = `\n\n${MARKER_START}\n${newBlock.trimEnd()}\n${MARKER_END}\n`;
-  const re = new RegExp(`${escapeRegExp(MARKER_START)}[\\s\\S]*?${escapeRegExp(MARKER_END)}\\n?`, 'g');
+  const block = `\n${MARKER_START}\n${newBlock.trimEnd()}\n${MARKER_END}\n`;
+  const re = new RegExp(`\\n?${escapeRegExp(MARKER_START)}[\\s\\S]*?${escapeRegExp(MARKER_END)}\\n?`, 'g');
   if (re.test(existing)) {
-    return existing.replace(re, wrappedBlock.trimStart() + '\n');
+    // Replace any existing marker block (consume leading \n so we don't double up).
+    // Then ensure exactly one \n before the new block.
+    return existing.replace(re, '\n' + block.trimEnd() + '\n').replace(/\n{3,}/g, '\n\n');
   }
-  // No existing marker block — append at the end
-  const sep = existing.endsWith('\n') ? '\n' : '\n\n';
-  return existing + sep + wrappedBlock;
+  // No existing marker block — append with exactly one blank line separator.
+  const head = existing.endsWith('\n') ? existing : existing + '\n';
+  return head + '\n' + block.trimEnd() + '\n';
 }
 
 function escapeRegExp(s) {
@@ -211,13 +214,12 @@ async function installFile({ base, localPath, templateUrl, isAgents, rl }) {
     if (exists) {
       const existing = fs.readFileSync(dest, 'utf8');
       const merged = mergeMarkerBlock(existing, templateContent);
-      // If nothing changed, skip
       if (merged === existing) return { status: 'unchanged', dest };
       fs.writeFileSync(dest, merged, 'utf8');
-      return { status: exists ? 'merged' : 'created', dest };
+      return { status: 'merged', dest };
     } else {
       // No existing AGENTS.md — create one with the marker block
-      const wrapped = `${MARKER_START}\n${templateContent.trimEnd()}\n${MARKER_END}\n`;
+      const wrapped = `\n${MARKER_START}\n${templateContent.trimEnd()}\n${MARKER_END}\n`;
       fs.writeFileSync(dest, wrapped, 'utf8');
       return { status: 'created', dest };
     }
