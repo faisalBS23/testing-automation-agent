@@ -5,8 +5,8 @@
 # Every flag you'd pass to bin/install.js can be passed here; we just forward.
 #
 # One-line install:
-#   curl -fsSL https://raw.githubusercontent.com/faisalBS23/testing-automation-agent/v2.0.0/install.sh | bash
-#   curl -fsSL https://raw.githubusercontent.com/faisalBS23/testing-automation-agent/v2.0.0/install.sh | bash -s -- --all
+#   curl -fsSL https://raw.githubusercontent.com/faisalBS23/testing-automation-agent/v2.1.0/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/faisalBS23/testing-automation-agent/v2.1.0/install.sh | bash -s -- --all
 #
 # Local clone:
 #   bash install.sh [flags]
@@ -44,5 +44,5 @@ if ! command -v npx >/dev/null 2>&1; then
   echo "testing-rules: npx required (ships with Node >=18)." >&2
   exit 1
 fi
-REF="${TESTING_RULES_REF:-v2.0.0}"
+REF="${TESTING_RULES_REF:-v2.1.0}"
 exec npx -y "github:faisalBS23/testing-automation-agent#$REF" "$@"

@@ -4,7 +4,7 @@
 # Mirrors install.sh on macOS/Linux.
 #
 # One-line install (Windows PowerShell 5.1+):
-#   irm https://raw.githubusercontent.com/faisalBS23/testing-automation-agent/v2.0.0/install.ps1 | iex
+#   irm https://raw.githubusercontent.com/faisalBS23/testing-automation-agent/v2.1.0/install.ps1 | iex
 #
 # Local clone:
 #   pwsh install.ps1 [flags]
@@ -40,6 +40,6 @@ if (-not (Get-Command npx -ErrorAction SilentlyContinue)) {
   Write-Error "testing-rules: npx required (ships with Node >=18)."
   exit 1
 }
-$ref = if ($env:TESTING_RULES_REF) { $env:TESTING_RULES_REF } else { 'v2.0.0' }
+$ref = if ($env:TESTING_RULES_REF) { $env:TESTING_RULES_REF } else { 'v2.1.0' }
 & npx -y "github:faisalBS23/testing-automation-agent#$ref" @args
 exit $LASTEXITCODE

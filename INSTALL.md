@@ -7,7 +7,7 @@ Four doors into the cave. Pick one.
 ## 1. curl | bash (any Unix)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/faisalBS23/testing-automation-agent/v2.0.0/install.sh | bash -s -- --all
+curl -fsSL https://raw.githubusercontent.com/faisalBS23/testing-automation-agent/v2.1.0/install.sh | bash -s -- --all
 ```
 
 Pass any flag after `--`:
@@ -19,7 +19,7 @@ curl -fsSL .../install.sh | bash -s -- --only claude --scope global --force
 ## 2. irm | iex (Windows PowerShell 5.1+)
 
 ```powershell
-irm https://raw.githubusercontent.com/faisalBS23/testing-automation-agent/v2.0.0/install.ps1 | iex -ArgumentList '--all'
+irm https://raw.githubusercontent.com/faisalBS23/testing-automation-agent/v2.1.0/install.ps1 | iex -ArgumentList '--all'
 ```
 
 ## 3. npx (cross-platform, no install required)

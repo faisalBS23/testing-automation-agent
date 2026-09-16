@@ -22,13 +22,13 @@ Three doors into the cave. Pick one.
 ### 1. One-line installer (any OS, recommended)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/faisalBS23/testing-automation-agent/v2.0.0/install.sh | bash -s -- --all
+curl -fsSL https://raw.githubusercontent.com/faisalBS23/testing-automation-agent/v2.1.0/install.sh | bash -s -- --all
 ```
 
 Windows PowerShell:
 
 ```powershell
-irm https://raw.githubusercontent.com/faisalBS23/testing-automation-agent/v2.0.0/install.ps1 | iex -ArgumentList '--all'
+irm https://raw.githubusercontent.com/faisalBS23/testing-automation-agent/v2.1.0/install.ps1 | iex -ArgumentList '--all'
 ```
 
 ### 2. npx

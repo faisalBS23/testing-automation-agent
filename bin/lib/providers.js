@@ -17,7 +17,7 @@ const path = require('path');
 const REPO = 'faisalBS23/testing-automation-agent';
 
 function getRef() {
-  return process.env.TESTING_RULES_REF || 'v2.0.0';
+  return process.env.TESTING_RULES_REF || 'v2.1.0';
 }
 
 function getRawBase() {
